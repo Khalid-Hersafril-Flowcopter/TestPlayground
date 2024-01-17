@@ -6,7 +6,11 @@
 
 const int led = LED_BUILTIN;  // the pin with a LED
 const int freq_output = 2;
-unsigned long time_us = 2000000;
+
+// The main reason why I need to half this is because when you're sending the 
+// Digital Output signals, you need to make sure that the 1s are hold 50% of the 
+// duration! So, if you want 1 Hz, then for 0.5s you hold 1s, and another 0.5s, you hold 0
+unsigned long time_us = 500;
 
 void setup(void)
 {
@@ -61,22 +65,22 @@ void loop(void)
   ledStateSignalCopy = ledStateSignal;
   interrupts();
 
-  if (millis() - lastUpdate_ms > change_freq_ms) {
-    time_us = time_us / 2;
-    time_ms = time_us / 1000;
-    tSample_ms = time_ms / 10;
-    lastUpdate_ms = millis();
+  // if (millis() - lastUpdate_ms > change_freq_ms) {
+  //   time_us = time_us / 2;
+  //   time_ms = time_us / 1000;
+  //   tSample_ms = time_ms / 10;
+  //   lastUpdate_ms = millis();
     
 
-    if (time_us < 50) {
-      time_us = 2000000;
-      time_ms = time_us / 1000;
-      tSample_ms = time_ms / 10;
-      lastUpdate_ms = millis();
-    }
+  //   if (time_us < 50) {
+  //     time_us = 2000000;
+  //     time_ms = time_us / 1000;
+  //     tSample_ms = time_ms / 10;
+  //     lastUpdate_ms = millis();
+  //   }
 
-    Timer1.setPeriod(time_us);
-  }
+  //   Timer1.setPeriod(time_us);
+  // }
 
   Serial.print("blinkCount = ");
   // Serial.print(time_us);
