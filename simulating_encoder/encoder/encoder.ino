@@ -5,6 +5,7 @@
 
 
 const int led = LED_BUILTIN;  // the pin with a LED
+const int freq_output = 2;
 unsigned long time_us = 2000000;
 
 void setup(void)
@@ -33,6 +34,7 @@ void blinkLED(void)
     ledStateSignal = 0;
   }
   digitalWrite(led, ledState);
+  digitalWrite(freq_output, ledState);
 }
 
 
@@ -42,7 +44,7 @@ unsigned long time_ms = time_us / 1000;
 unsigned long tSample_ms = time_ms / 10;
 
 unsigned long lastUpdate_ms = millis();
-unsigned long change_freq_ms = 10000;
+unsigned long change_freq_ms = 1000;
 
 void loop(void)
 {
@@ -66,7 +68,7 @@ void loop(void)
     lastUpdate_ms = millis();
     
 
-    if (time_us < 62500) {
+    if (time_us < 50) {
       time_us = 2000000;
       time_ms = time_us / 1000;
       tSample_ms = time_ms / 10;
