@@ -18,7 +18,7 @@ void setup(void)
   pinMode(freq_output, OUTPUT);
   Timer1.initialize(time_us);
   Timer1.attachInterrupt(blinkLED); // blinkLED to run every 0.15 seconds
-  Serial.begin(115200);
+  Serial.begin(1000000);
   digitalWrite(led, LOW);
   digitalWrite(freq_output, LOW);
 }
@@ -41,7 +41,7 @@ void blinkLED(void)
     ledStateSignal = 0;
   }
   digitalWrite(led, ledState);
-  digitalWrite(freq_output, ledState);
+  digitalWrite(freq_output, ledStateSignal);
 }
 
 
