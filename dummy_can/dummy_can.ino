@@ -68,10 +68,15 @@ void setup() {
     pinMode(motor_2_pin, OUTPUT);
     pinMode(motor_3_pin, OUTPUT);
     pinMode(motor_4_pin, OUTPUT);
+
+    analogWrite(motor_1_pin, 0);
+    analogWrite(motor_2_pin, 0);
+    analogWrite(motor_3_pin, 0);
+    analogWrite(motor_4_pin, 0);
 }
 
-int scale_fd_to_pwm(double Fd) {
-  int pwm_val = Fd * 255;
+float scale_fd_to_pwm(float Fd) {
+  float pwm_val = Fd * 255;
   return pwm_val;
 }
 
@@ -105,7 +110,6 @@ unsigned char get_pump_fd_byte(unsigned char *buf) {
 
 unsigned char stmp[8] = {0, 0, 0, 0, 0, 0, 0, 0};
 void loop() {
-
     // Reset the reception flags at the start of each loop
     bool allReceived = true;
     for (int i = 0; i < 4; i++) {
@@ -115,54 +119,63 @@ void loop() {
         }
     }
 
-    // send data:  id = 0x00, standrad frame, data len = 8, stmp: data buf
-    // Indicator that arduino is alive
-    // stmp[7] = stmp[7] + 1;
-    // if (stmp[7] == 100) {
-    //     stmp[7] = 0;
-    //     stmp[6] = stmp[6] + 1;
+    // Check if all data has been received
+    if (allReceived) {
+        // If all data is received, execute control
 
-    //     if (stmp[6] == 100) {
-    //         stmp[6] = 0;
-    //         stmp[5] = stmp[5] + 1;
-    //     }
-    // }
+        // Serial.println();
 
-    // CAN.sendMsgBuf(0x00, 0, 8, stmp);
-    // SERIAL_PORT_MONITOR.println("CAN BUS sendMsgBuf ok!");
+        analogWrite(motor_1_pin, (uint8_t)(motorData[0].fd_value * 255));
+        analogWrite(motor_2_pin, (uint8_t)(motorData[1].fd_value * 255));
+        analogWrite(motor_3_pin, (uint8_t)(motorData[2].fd_value * 255));
+        analogWrite(motor_4_pin, (uint8_t)(motorData[3].fd_value * 255));
 
-    // ---------------------
+        Serial.print((uint8_t)(motorData[0].fd_value * 255));
+        Serial.print(" ");
+        Serial.print((uint8_t)(motorData[1].fd_value * 255));
+        Serial.print(" ");
+        Serial.print((uint8_t)(motorData[2].fd_value * 255));
+        Serial.print(" ");
+        Serial.print((uint8_t)(motorData[3].fd_value * 255));
+        Serial.println(" ");
         
-    if (CAN_MSGAVAIL == CAN.checkReceive()) {
-    // read data,  len: data length, buf: data buf
-        // SERIAL_PORT_MONITOR.println("checkReceive");
-        CAN.readMsgBuf(&len, buf);
-
-        uint32_t curr_id = CAN.getCanId();
-
-        if (curr_id == 1351 || curr_id == 1352 || curr_id == 1353 || curr_id == 1354) {
-          Serial.println(curr_id);
-          float fd_value = convertBytesToFloat(buf, 8);
-          int pwm_value = scale_fd_to_pwm(fd_value); 
-
-          switch (curr_id) {
-            case 1351:
-              analogWrite(motor_1_pin,  pwm_value);
-              break;
-            case 1352:
-              analogWrite(motor_2_pin,  pwm_value);
-              break;
-            case 1353:
-              analogWrite(motor_3_pin,  pwm_value);
-              break;
-            case 1354:
-              analogWrite(motor_4_pin,  pwm_value);
-              break;
-          }
+        
+        // Reset the received flags
+        for (int i = 0; i < 4; i++) {
+            motorData[i].received = false;
         }
+    } else {
+        // Continue to read CAN messages if not all data has been received
+        if (CAN_MSGAVAIL == CAN.checkReceive()) {
+            CAN.readMsgBuf(&len, buf);
+            uint32_t curr_id = CAN.getCanId();
+            int motor_index = -1;
 
+            // Determine which motor should receive the data
+            switch (curr_id) {
+                case 1351:
+                    motor_index = 0;
+                    break;
+                case 1352:
+                    motor_index = 1;
+                    break;
+                case 1353:
+                    motor_index = 2;
+                    break;
+                case 1354:
+                    motor_index = 3;
+                    break;
+                default:
+                    // If the ID is not relevant, ignore this message
+                    break;
+            }
+
+            if (motor_index != -1) {
+                motorData[motor_index].fd_value = convertBytesToFloat(buf, 8);
+                motorData[motor_index].received = true;
+            }
+        }
     }
+    // Optional: Output status for debugging
     // SERIAL_PORT_MONITOR.println("---LOOP END---");
 }
-
-// END FILE
